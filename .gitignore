@@ -2,3 +2,4 @@ venv
 *.sqlite
 *.swo
 *.swp
+.idea
