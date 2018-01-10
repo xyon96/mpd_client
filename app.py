@@ -1,32 +1,39 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-import os
+from flask import Flask, request, jsonify
+import mpd
 
 app = Flask(__name__)
-basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mpd_control.sqlite'
-db = SQLAlchemy(app)
+mpd_client = mpd.MPDClient(use_unicode=True)
+mpd_client.connect("localhost", 6600)
 
-class Address(db.Model):
-  id = db.Column(db.Integer, primary_key=True)
-  user = db.Column(db.String(120))
-  address = db.Column(db.String(512))
+@app.route("/music", methods=["GET"])
+def get_all_music():
+  return jsonify(mpd_client.lsinfo("/"))
 
-  def __init__(self, user, address):
-    self.user = user
-    self.address = address
+# TODO: Need to figure out how to list by artist
+#@app.route("/music/<artist>", methods=["GET"])
+#def get_music_artist(artist):
+#  return jsonify(mpd_client.lsinfo("/" + artist))
 
+@app.route("/status", methods=["GET"])
+def get_status():
+  return jsonify(mpd_client.status())
 
-@app.route("/users", methods=["GET"])
-def get_users():
-  all_users = Address.query.all()
-  return all_users
+@app.route("/status/<status_id>", methods=["GET"])
+def status_with_id(status_id):
+  if status_id in mpd_client.status():
+    return jsonify(mpd_client.status()[status_id])
+  else:
+    return jsonify({"ERROR": "Status Key Not Found"})
 
-# Hello World example
-#@app.route("/")
-#def hello():
-#    return "Hello World!"
+@app.route("/play", methods=["GET"])
+def press_play():
+  return jsonify(mpd_client.play())
+
+@app.route("/pause", methods=["GET"])
+def press_pause():
+  return jsonify(mpd_client.pause())
+
+# TODO: Would like to toggle play/pause via a single endpoint
 
 if __name__ == '__main__':
     app.run(debug=True)
-
