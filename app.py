@@ -33,7 +33,13 @@ def press_play():
 def press_pause():
   return jsonify(mpd_client.pause())
 
-# TODO: Would like to toggle play/pause via a single endpoint
+@app.route("/state", methods=["PUT"])
+def toggle_state():
+  if mpd_client.status()['state'] == 'play':
+    mpd_client.pause()
+  else:
+    mpd_client.play()
+
 
 if __name__ == '__main__':
     app.run(debug=True)
