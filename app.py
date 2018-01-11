@@ -50,11 +50,11 @@ def get_status():
 def get_status_id(status_id):
   mpd_client.connect("localhost", 6600)
   if status_id in mpd_client.status():
-    status = mpd_client.status()[status_id]
+    status = jsonify({status_id: mpd_client.status()[status_id]})
   else:
-    status = {"ERROR": "Status Key Not Found"}
+    status = errorify("status key not found: " + status_id)
   mpd_client.disconnect()
-  return jsonify({status_id: status})
+  return status
 
 @app.route("/play", methods=["GET"])
 def press_play():
@@ -92,8 +92,11 @@ def change_state():
     mpd_client.disconnect()
     return jsonify({"state": state})
   else:
-    return jsonify({"error": "invalid json submitted"})
+    return errorify("invalid json submitted")
 
+
+def errorify(error):
+  return jsonify({"error": error})
 
 if __name__ == '__main__':
     app.run(debug=True)
