@@ -3,11 +3,13 @@ import mpd
 
 app = Flask(__name__)
 mpd_client = mpd.MPDClient(use_unicode=True)
-mpd_client.connect("localhost", 6600)
 
 @app.route("/music", methods=["GET"])
 def get_all_music():
-  return jsonify(mpd_client.lsinfo("/"))
+  mpd_client.connect("localhost", 6600)
+  list_info = mpd_client.lsinfo("/")
+  mpd_client.disconnect()
+  return jsonify(list_info)
 
 # TODO: Need to figure out how to list by artist
 #@app.route("/music/<artist>", methods=["GET"])
@@ -16,29 +18,36 @@ def get_all_music():
 
 @app.route("/status", methods=["GET"])
 def get_status():
-  return jsonify(mpd_client.status())
+  mpd_client.connect("localhost", 6600)
+  status = mpd_client.status()
+  mpd_client.disconnect()
+  return jsonify(status)
 
 @app.route("/status/<status_id>", methods=["GET"])
 def status_with_id(status_id):
+  mpd_client.connect("localhost", 6600)
   if status_id in mpd_client.status():
-    return jsonify(mpd_client.status()[status_id])
+    status = mpd_client.status()[status_id]
   else:
-    return jsonify({"ERROR": "Status Key Not Found"})
+    status = {"ERROR": "Status Key Not Found"}
+  mpd_client.disconnect()
+  return jsonify({status_id: status})
 
 @app.route("/play", methods=["GET"])
 def press_play():
-  return jsonify(mpd_client.play())
+  mpd_client.connect("localhost", 6600)
+  mpd_client.play()
+  state = mpd_client.status()['state']
+  mpd_client.disconnect()
+  return jsonify({"state": state})
 
 @app.route("/pause", methods=["GET"])
 def press_pause():
-  return jsonify(mpd_client.pause())
-
-@app.route("/state", methods=["PUT"])
-def toggle_state():
-  if mpd_client.status()['state'] == 'play':
-    mpd_client.pause()
-  else:
-    mpd_client.play()
+  mpd_client.connect("localhost", 6600)
+  mpd_client.pause()
+  state = mpd_client.status()['state']
+  mpd_client.disconnect()
+  return jsonify({"state": state})
 
 
 if __name__ == '__main__':
