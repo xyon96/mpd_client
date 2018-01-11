@@ -19,7 +19,7 @@ def get_music_artist(artist):
   return jsonify(list_info)
 
 @app.route("/files", methods=["GET"])
-def get_songs():
+def get_all_songs():
   mpd_client.connect("localhost", 6600)
   list_info = mpd_client.listall("/")
   mpd_client.disconnect()
@@ -47,7 +47,7 @@ def get_status():
   return jsonify(status)
 
 @app.route("/status/<status_id>", methods=["GET"])
-def status_with_id(status_id):
+def get_status_id(status_id):
   mpd_client.connect("localhost", 6600)
   if status_id in mpd_client.status():
     status = mpd_client.status()[status_id]
@@ -71,6 +71,28 @@ def press_pause():
   state = mpd_client.status()['state']
   mpd_client.disconnect()
   return jsonify({"state": state})
+
+@app.route("/state", methods=["PUT"])
+def change_state():
+  # Ensure we were given valid json
+  if (request.headers['Content-Type'] == 'application/json'
+      and 'state' in request.json):
+    mpd_client.connect("localhost", 6600)
+    # If state requested is 'play'
+    if (request.json['state'] == 'play'
+        and mpd_client.status()['state'] != 'play'):
+      mpd_client.play()
+    # Otherwise if state requested is 'pause'
+    elif (request.json['state'] == 'pause'
+          and mpd_client.status()['state'] != 'pause'):
+      mpd_client.pause()
+    # Retrieve what the state is now and return
+    # that to the requester
+    state = mpd_client.status()['state']
+    mpd_client.disconnect()
+    return jsonify({"state": state})
+  else:
+    return jsonify({"error": "invalid json submitted"})
 
 
 if __name__ == '__main__':
