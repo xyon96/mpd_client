@@ -11,10 +11,33 @@ def get_all_music():
   mpd_client.disconnect()
   return jsonify(list_info)
 
-# TODO: Need to figure out how to list by artist
-#@app.route("/music/<artist>", methods=["GET"])
-#def get_music_artist(artist):
-#  return jsonify(mpd_client.lsinfo("/" + artist))
+@app.route("/music/<artist>", methods=["GET"])
+def get_music_artist(artist):
+  mpd_client.connect("localhost", 6600)
+  list_info = mpd_client.lsinfo(artist)
+  mpd_client.disconnect()
+  return jsonify(list_info)
+
+@app.route("/files", methods=["GET"])
+def get_songs():
+  mpd_client.connect("localhost", 6600)
+  list_info = mpd_client.listall("/")
+  mpd_client.disconnect()
+  return jsonify(list_info)
+
+@app.route("/files/<directory>", methods=["GET"])
+def get_songs_dir(directory):
+  mpd_client.connect("localhost", 6600)
+  list_info = mpd_client.listall(directory)
+  mpd_client.disconnect()
+  return jsonify(list_info)
+
+@app.route("/files/<directory>/<filename>", methods=["GET"])
+def get_songs_file(directory, filename):
+  mpd_client.connect("localhost", 6600)
+  list_info = mpd_client.listall(directory + "/" + filename)
+  mpd_client.disconnect()
+  return jsonify(list_info)
 
 @app.route("/status", methods=["GET"])
 def get_status():
